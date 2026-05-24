@@ -91,7 +91,11 @@ server.listen(PORT, () => {
       console.error('Tunnel process error:', err.message);
       if (err.code === 'ENOENT') {
         console.log("Error: 'loclx' command not found. Please install LocalXpose CLI.");
-        console.log("Install using: !curl -sL https://localxpose.io/install.sh | bash");
+        console.log("Install using the following commands in Colab:");
+        console.log("!wget https://api.localxpose.io/api/v2/downloads/loclx-linux-amd64.zip");
+        console.log("!unzip loclx-linux-amd64.zip");
+        console.log("!chmod +x loclx");
+        console.log("!sudo mv loclx /usr/local/bin/");
       }
     });
 

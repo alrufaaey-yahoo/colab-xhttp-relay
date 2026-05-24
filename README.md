@@ -15,7 +15,10 @@ XHTTP Relay for Google Colab
     !sudo apt-get install -y nodejs
 
     # تثبيت LocalXpose CLI
-    !curl -sL https://localxpose.io/install.sh | bash
+    !wget https://api.localxpose.io/api/v2/downloads/loclx-linux-amd64.zip
+    !unzip loclx-linux-amd64.zip
+    !chmod +x loclx
+    !sudo mv loclx /usr/local/bin/
     ```
 
 3.  **استنساخ المستودع:** قم باستنساخ هذا المستودع:

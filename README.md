@@ -16,24 +16,23 @@
 3.  **استنساخ المستودع:** قم باستنساخ هذا المستودع إلى بيئة Colab الخاصة بك:
 
     ```bash
-    !git clone https://github.com/<YOUR_GITHUB_USERNAME>/colab-xhttp-relay.git
+    !git clone https://github.com/alrufaaey-yahoo/colab-xhttp-relay.git
     %cd colab-xhttp-relay
     ```
-    **ملاحظة:** استبدل `<YOUR_GITHUB_USERNAME>` باسم مستخدم GitHub الخاص بك.
 
-4.  **تثبيت الاعتمادات:** قم بتثبيت الاعتمادات المطلوبة، بما في ذلك `ngrok`:
+4.  **تثبيت الاعتمادات:** قم بتثبيت الاعتمادات المطلوبة، بما في ذلك `localtunnel`:
 
     ```bash
     !npm install
     ```
 
-5.  **تشغيل الخادم:** قم بتشغيل الخادم. سيقوم `ngrok` بإنشاء نفق عام لتطبيقك. تأكد من استبدال `YOUR_NGROK_AUTH_TOKEN` برمز المصادقة الخاص بك من [ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken).
+5.  **تشغيل الخادم:** قم بتشغيل الخادم. سيقوم `localtunnel` بإنشاء نفق عام لتطبيقك.
 
     ```bash
-    !NGROK_AUTHTOKEN=YOUR_NGROK_AUTH_TOKEN node index.js
+    !node index.js
     ```
 
-    بعد تشغيل الخادم، ستحصل على رابط `ngrok` عام في مخرجات الخلية. استخدم هذا الرابط للوصول إلى تطبيق الترحيل الخاص بك.
+    بعد تشغيل الخادم، ستحصل على رابط `localtunnel` عام في مخرجات الخلية. استخدم هذا الرابط للوصول إلى تطبيق الترحيل الخاص بك.
 
 ## التكوين
 

@@ -1,30 +1,30 @@
-const http = require(\'http\');
-const https = require(\'https\');
-const url = require(\'url\');
-const ngrok = require(\'ngrok\');
+const http = require('http');
+const https = require('https');
+const url = require('url');
+const localtunnel = require('localtunnel');
 
-const TARGET_DOMAIN = process.env.TARGET_DOMAIN || \'https://thumbayan.com:443\';
+const TARGET_DOMAIN = process.env.TARGET_DOMAIN || 'https://thumbayan.com:443';
 
 const STRIP_HEADERS = new Set([
-  \'host\',
-  \'connection\',
-  \'keep-alive\',
-  \'proxy-authenticate\',
-  \'proxy-authorization\',
-  \'te\',
-  \'trailer\',
-  \'transfer-encoding\',
-  \'upgrade\',
-  \'forwarded\',
-  \'x-forwarded-host\',
-  \'x-forwarded-proto\',
-  \'x-forwarded-port\',
+  'host',
+  'connection',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+  'forwarded',
+  'x-forwarded-host',
+  'x-forwarded-proto',
+  'x-forwarded-port',
 ]);
 
 const server = http.createServer(async (req, res) => {
   if (!TARGET_DOMAIN) {
-    res.writeHead(500, { \'Content-Type\': \'text/plain\' });
-    res.end(\'Misconfigured: TARGET_DOMAIN is not set\');
+    res.writeHead(500, { 'Content-Type': 'text/plain' });
+    res.end('Misconfigured: TARGET_DOMAIN is not set');
     return;
   }
 
@@ -40,36 +40,36 @@ const server = http.createServer(async (req, res) => {
     for (const [k, v] of Object.entries(req.headers)) {
       const lowerK = k.toLowerCase();
       if (STRIP_HEADERS.has(lowerK)) continue;
-      if (lowerK.startsWith(\'x-vercel-\')) continue;
-      if (lowerK === \'x-real-ip\') {
+      if (lowerK.startsWith('x-vercel-')) continue;
+      if (lowerK === 'x-real-ip') {
         clientIp = v;
         continue;
       }
-      if (lowerK === \'x-forwarded-for\') {
+      if (lowerK === 'x-forwarded-for') {
         if (!clientIp) clientIp = v;
         continue;
       }
       options.headers[k] = v;
     }
-    if (clientIp) options.headers[\'x-forwarded-for\'] = clientIp;
+    if (clientIp) options.headers['x-forwarded-for'] = clientIp;
 
-    const proxyReq = (options.protocol === \'https:\' ? https : http).request(options, (proxyRes) => {
+    const proxyReq = (options.protocol === 'https:' ? https : http).request(options, (proxyRes) => {
       res.writeHead(proxyRes.statusCode, proxyRes.headers);
       proxyRes.pipe(res, { end: true });
     });
 
-    proxyReq.on(\'error\', (err) => {
-      console.error(\'Proxy request error:\', err);
-      res.writeHead(502, { \'Content-Type\': \'text/plain\' });
-      res.end(\'Bad Gateway: Proxy Request Failed\');
+    proxyReq.on('error', (err) => {
+      console.error('Proxy request error:', err);
+      res.writeHead(502, { 'Content-Type': 'text/plain' });
+      res.end('Bad Gateway: Proxy Request Failed');
     });
 
     req.pipe(proxyReq, { end: true });
 
   } catch (err) {
-    console.error(\'Relay error:\', err);
-    res.writeHead(502, { \'Content-Type\': \'text/plain\' });
-    res.end(\'Bad Gateway: Tunnel Failed\');
+    console.error('Relay error:', err);
+    res.writeHead(502, { 'Content-Type': 'text/plain' });
+    res.end('Bad Gateway: Tunnel Failed');
   }
 });
 
@@ -77,13 +77,17 @@ const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, async () => {
   console.log(`Server listening on port ${PORT}`);
-  if (process.env.NODE_ENV !== \'production\') {
+  if (process.env.NODE_ENV !== 'production') {
     try {
-      const url = await ngrok.connect(PORT);
-      console.log(`ngrok tunnel established at: ${url}`);
+      const tunnel = await localtunnel({ port: PORT });
+      console.log(`LocalTunnel established at: ${tunnel.url}`);
       console.log(`Access your relay via this URL.`);
+      
+      tunnel.on('close', () => {
+        console.log('LocalTunnel closed');
+      });
     } catch (error) {
-      console.error(\'Error connecting to ngrok:\', error);
+      console.error('Error connecting to LocalTunnel:', error);
     }
   }
 });

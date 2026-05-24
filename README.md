@@ -1,17 +1,21 @@
 # colab-xhttp-relay
 XHTTP Relay for Google Colab
 
-هذا المستودع هو نسخة معدّلة من [replit-xhttp-relay](https://github.com/alrufaaey-yahoo/replit-xhttp-relay) مصممة للعمل على [Google Colab](https://colab.research.google.com/). يوفر هذا التطبيق وسيطًا (relay) لطلبات HTTP باستخدام نفق **Pinggy**، وهو حل خفيف الوزن وغير مشهور يعمل عبر SSH مباشرة دون الحاجة لتثبيت برامج إضافية.
+هذا المستودع هو نسخة معدّلة من [replit-xhttp-relay](https://github.com/alrufaaey-yahoo/replit-xhttp-relay) مصممة للعمل على [Google Colab](https://colab.research.google.com/). يوفر هذا التطبيق وسيطًا (relay) لطلبات HTTP باستخدام نفق **LocalXpose** القوي.
 
 ## كيفية الاستخدام على Google Colab
 
 1.  **افتح Google Colab:** انتقل إلى [Google Colab](https://colab.research.google.com/) وأنشئ دفتر ملاحظات جديدًا.
 
-2.  **تثبيت Node.js (إذا لم يكن مثبتاً):** قم بتشغيل الأوامر التالية في خلية Colab:
+2.  **تثبيت الأدوات اللازمة:** قم بتشغيل الأوامر التالية في خلية Colab لتثبيت Node.js وأداة LocalXpose:
 
     ```bash
+    # تثبيت Node.js
     !curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
     !sudo apt-get install -y nodejs
+
+    # تثبيت LocalXpose CLI
+    !curl -sL https://localxpose.io/install.sh | bash
     ```
 
 3.  **استنساخ المستودع:** قم باستنساخ هذا المستودع:
@@ -21,13 +25,13 @@ XHTTP Relay for Google Colab
     %cd colab-xhttp-relay
     ```
 
-4.  **تشغيل الخادم:** لا يحتاج Pinggy لتثبيت أي أدوات، سيعمل تلقائياً عبر SSH.
+4.  **تشغيل الخادم:** قم بتشغيل الخادم، وسيتم إنشاء النفق تلقائياً.
 
     ```bash
     !node index.js
     ```
 
-    بعد تشغيل الخادم، ابحث في المخرجات عن رابط ينتهي بـ `.a.pinggy.link` (سيظهر بجانب عبارة `✅ Tunnel established!`). استخدم هذا الرابط للوصول إلى تطبيق الترحيل الخاص بك.
+    بعد تشغيل الخادم، ابحث في المخرجات عن رابط ينتهي بـ `.loclx.io` (سيظهر بجانب عبارة `✅ Tunnel established!`). استخدم هذا الرابط للوصول إلى تطبيق الترحيل الخاص بك.
 
 ## التكوين
 
@@ -37,11 +41,11 @@ XHTTP Relay for Google Colab
 !TARGET_DOMAIN=https://your-target-domain.com node index.js
 ```
 
-## لماذا Pinggy؟
+## لماذا LocalXpose؟
 
-*   **بدون تثبيت (Zero Install):** يعمل مباشرة عبر أمر SSH الموجود مسبقاً في جميع أنظمة Linux بما في ذلك Colab.
-*   **غير مشهور:** خيار ممتاز لمن يبحث عن بدائل بعيدة عن الأنفاق التقليدية المشهورة.
-*   **سرعة عالية:** يعتمد على بروتوكول SSH الموثوق والسريع.
+*   **سرعة وأداء:** يوفر اتصالات سريعة ومستقرة.
+*   **مرونة:** يدعم بروتوكولات متعددة وميزات متقدمة للمطورين.
+*   **سهولة التثبيت:** يتوفر سكربت تثبيت سريع لبيئات Linux.
 
 ## الترخيص
 

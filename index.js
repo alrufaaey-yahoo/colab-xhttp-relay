@@ -79,43 +79,36 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Starting Pinggy Tunnel (SSH-based, No Install)...');
+    console.log('Starting LocalXpose Tunnel...');
     
-    // Pinggy is a lightweight, less-known tunnel that works over SSH
-    // No installation required, just SSH.
-    const tunnel = spawn('ssh', [
-      '-o', 'StrictHostKeyChecking=no',
-      '-o', 'ServerAliveInterval=30',
-      '-R', `80:localhost:${PORT}`,
-      'a.pinggy.io'
+    // LocalXpose is a powerful tunneling service
+    // It requires the 'loclx' binary to be installed
+    const tunnel = spawn('loclx', [
+      'tunnel', 'http', '--to', `localhost:${PORT}`
     ]);
 
     tunnel.on('error', (err) => {
       console.error('Tunnel process error:', err.message);
       if (err.code === 'ENOENT') {
-        console.log("Error: 'ssh' command not found. Please install openssh-client.");
+        console.log("Error: 'loclx' command not found. Please install LocalXpose CLI.");
+        console.log("Install using: !curl -sL https://localxpose.io/install.sh | bash");
       }
     });
 
     tunnel.stdout.on('data', (data) => {
       const output = data.toString();
-      // Pinggy output contains the public URL
-      const match = output.match(/https:\/\/[a-z0-9-]+\.a\.pinggy\.link/);
+      // LocalXpose output contains the public URL
+      const match = output.match(/https:\/\/[a-z0-9-]+\.loclx\.io/);
       if (match) {
         console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
       }
-      console.log('Pinggy:', output.trim());
+      console.log('LocalXpose:', output.trim());
     });
 
     tunnel.stderr.on('data', (data) => {
       const output = data.toString();
-      // Capture the URL from stderr if it appears there (some SSH outputs do)
-      const match = output.match(/https:\/\/[a-z0-9-]+\.a\.pinggy\.link/);
-      if (match) {
-        console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
-      }
       if (output.toLowerCase().includes('error') || output.toLowerCase().includes('failed')) {
-          console.error(`Pinggy Error: ${output.trim()}`);
+          console.error(`LocalXpose Error: ${output.trim()}`);
       }
     });
 

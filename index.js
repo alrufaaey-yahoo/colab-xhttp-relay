@@ -79,37 +79,36 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Starting Pinggy tunnel (Alternative to localhost.run)...');
+    console.log('Starting Serveo tunnel (Alternative to localhost.run)...');
     
-    // Pinggy uses SSH for zero-install tunnels
-    // The -T flag is often needed for non-interactive shells
+    // Serveo uses SSH for zero-install tunnels
     const ssh = spawn('ssh', [
-      '-p', '443',
       '-R', `80:localhost:${PORT}`,
+      'serveo.net',
       '-o', 'StrictHostKeyChecking=no',
       '-o', 'UserKnownHostsFile=/dev/null',
-      '-o', 'ServerAliveInterval=30',
-      'a.pinggy.io'
+      '-o', 'ServerAliveInterval=60'
     ]);
 
     ssh.stdout.on('data', (data) => {
       const output = data.toString();
-      // Pinggy output contains the URL
-      const match = output.match(/https:\/\/[a-z0-9-]+\.free\.pinggy\.link/);
+      console.log(output);
+      // Look for the URL in the output (Serveo usually outputs "Forwarding HTTP traffic from https://xxxx.serveo.net")
+      const match = output.match(/https:\/\/[a-z0-9-]+\.serveo\.net/);
       if (match) {
         console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
-      }
-      // Log other output if needed for debugging
-      if (output.includes('http')) {
-         console.log('Pinggy Output:', output.trim());
       }
     });
 
     ssh.stderr.on('data', (data) => {
-      // SSH stderr often contains connection info, not necessarily errors
       const errOutput = data.toString();
+      // Serveo might output the URL on stderr sometimes or other info
+      const match = errOutput.match(/https:\/\/[a-z0-9-]+\.serveo\.net/);
+      if (match) {
+        console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
+      }
       if (errOutput.toLowerCase().includes('error') || errOutput.toLowerCase().includes('failed')) {
-          console.error(`SSH Tunnel Error: ${errOutput.trim()}`);
+          console.error(`SSH Stderr: ${errOutput.trim()}`);
       }
     });
 

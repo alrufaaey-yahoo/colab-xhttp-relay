@@ -1,7 +1,7 @@
 const http = require('http');
 const https = require('https');
 const url = require('url');
-const { pinggy } = require('@pinggy/pinggy');
+const { spawn } = require('child_process');
 
 const TARGET_DOMAIN = process.env.TARGET_DOMAIN || 'https://thumbayan.com:443';
 
@@ -75,19 +75,35 @@ const server = http.createServer(async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, async () => {
+server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+  
   if (process.env.NODE_ENV !== 'production') {
-    try {
-      const tunnel = await pinggy.forward({
-        forwarding: `localhost:${PORT}`,
-        token: process.env.PINGGY_TOKEN || undefined
-      });
-      const urls = await tunnel.urls();
-      console.log(`Pinggy tunnel established at: ${urls.join(', ')}`);
-      console.log(`Access your relay via these URLs.`);
-    } catch (error) {
-      console.error('Error connecting to Pinggy:', error);
-    }
+    console.log('Starting localhost.run tunnel...');
+    
+    const ssh = spawn('ssh', [
+      '-R', `80:localhost:${PORT}`,
+      'localhost.run',
+      '-o', 'StrictHostKeyChecking=no',
+      '-o', 'UserKnownHostsFile=/dev/null'
+    ]);
+
+    ssh.stdout.on('data', (data) => {
+      const output = data.toString();
+      console.log(output);
+      // Look for the URL in the output
+      const match = output.match(/https:\/\/[a-z0-9-]+\.lhr\.life/);
+      if (match) {
+        console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
+      }
+    });
+
+    ssh.stderr.on('data', (data) => {
+      console.error(`SSH Stderr: ${data}`);
+    });
+
+    ssh.on('close', (code) => {
+      console.log(`SSH tunnel process exited with code ${code}`);
+    });
   }
 });

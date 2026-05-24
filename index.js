@@ -79,42 +79,43 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Starting Cloudflare Tunnel (Direct Link)...');
+    console.log('Starting Pinggy Tunnel (SSH-based, No Install)...');
     
-    // Cloudflare Tunnel (cloudflared) provides a stable and direct link
-    let tunnel;
-    try {
-      tunnel = spawn('cloudflared', [
-        'tunnel', '--url', `http://localhost:${PORT}`
-      ]);
-    } catch (err) {
-      console.error('Failed to start Cloudflare Tunnel:', err.message);
-      console.log("Make sure 'cloudflared' is installed. You can install it using:");
-      console.log("!curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared");
-      return;
-    }
+    // Pinggy is a lightweight, less-known tunnel that works over SSH
+    // No installation required, just SSH.
+    const tunnel = spawn('ssh', [
+      '-o', 'StrictHostKeyChecking=no',
+      '-o', 'ServerAliveInterval=30',
+      '-R', `80:localhost:${PORT}`,
+      'a.pinggy.io'
+    ]);
 
     tunnel.on('error', (err) => {
       console.error('Tunnel process error:', err.message);
       if (err.code === 'ENOENT') {
-        console.log("Error: 'cloudflared' command not found in PATH.");
+        console.log("Error: 'ssh' command not found. Please install openssh-client.");
       }
     });
 
     tunnel.stdout.on('data', (data) => {
-      console.log('Cloudflare:', data.toString().trim());
+      const output = data.toString();
+      // Pinggy output contains the public URL
+      const match = output.match(/https:\/\/[a-z0-9-]+\.a\.pinggy\.link/);
+      if (match) {
+        console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
+      }
+      console.log('Pinggy:', output.trim());
     });
 
     tunnel.stderr.on('data', (data) => {
       const output = data.toString();
-      // Cloudflare Tunnel output format for the public URL
-      const match = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
+      // Capture the URL from stderr if it appears there (some SSH outputs do)
+      const match = output.match(/https:\/\/[a-z0-9-]+\.a\.pinggy\.link/);
       if (match) {
         console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
       }
-      // Only log errors or important info from stderr to keep it clean
-      if (output.includes('error') || output.includes('failed')) {
-          console.error(`Cloudflare Error: ${output.trim()}`);
+      if (output.toLowerCase().includes('error') || output.toLowerCase().includes('failed')) {
+          console.error(`Pinggy Error: ${output.trim()}`);
       }
     });
 

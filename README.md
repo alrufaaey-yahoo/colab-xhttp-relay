@@ -28,20 +28,24 @@ XHTTP Relay for Google Colab
     %cd colab-xhttp-relay
     ```
 
-4.  **تشغيل الخادم:** قم بتشغيل الخادم، وسيتم إنشاء النفق تلقائياً.
+4.  **تشغيل الخادم:** قم بتشغيل الخادم مع التوكن الخاص بك، وسيتم إنشاء النفق تلقائياً.
 
     ```bash
-    !node index.js
+    !LOCLX_AUTH_TOKEN=your_access_token_here node index.js
     ```
 
     بعد تشغيل الخادم، ابحث في المخرجات عن رابط ينتهي بـ `.loclx.io` (سيظهر بجانب عبارة `✅ Tunnel established!`). استخدم هذا الرابط للوصول إلى تطبيق الترحيل الخاص بك.
 
 ## التكوين
 
-يمكنك تعيين `TARGET_DOMAIN` كمتغير بيئة لتحديد النطاق الهدف:
+يمكنك تعيين المتغيرات التالية كمتغيرات بيئة:
 
+*   `TARGET_DOMAIN`: النطاق الهدف الذي تريد الترحيل إليه (افتراضي: `https://thumbayan.com:443`).
+*   `LOCLX_AUTH_TOKEN`: رمز الوصول الخاص بـ LocalXpose لتجنب خطأ `unauthenticated`.
+
+مثال متكامل:
 ```bash
-!TARGET_DOMAIN=https://your-target-domain.com node index.js
+!TARGET_DOMAIN=https://your-target-domain.com LOCLX_AUTH_TOKEN=your_token node index.js
 ```
 
 ## لماذا LocalXpose؟

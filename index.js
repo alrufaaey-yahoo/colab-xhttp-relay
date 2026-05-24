@@ -1,9 +1,10 @@
 const http = require('http');
 const https = require('https');
 const url = require('url');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 
 const TARGET_DOMAIN = process.env.TARGET_DOMAIN || 'https://thumbayan.com:443';
+const LOCLX_AUTH_TOKEN = process.env.LOCLX_AUTH_TOKEN;
 
 const STRIP_HEADERS = new Set([
   'host',
@@ -81,6 +82,19 @@ server.listen(PORT, () => {
   if (process.env.NODE_ENV !== 'production') {
     console.log('Starting LocalXpose Tunnel...');
     
+    // Authenticate if token is provided
+    if (LOCLX_AUTH_TOKEN) {
+      try {
+        console.log('Authenticating LocalXpose...');
+        execSync(`loclx account login --access-token ${LOCLX_AUTH_TOKEN}`);
+        console.log('✅ Authenticated successfully.');
+      } catch (err) {
+        console.error('❌ Authentication failed:', err.message);
+      }
+    } else {
+      console.log('⚠️ No LOCLX_AUTH_TOKEN found. Tunnel might fail if unauthenticated.');
+    }
+
     // LocalXpose is a powerful tunneling service
     // It requires the 'loclx' binary to be installed
     const tunnel = spawn('loclx', [
@@ -111,8 +125,12 @@ server.listen(PORT, () => {
 
     tunnel.stderr.on('data', (data) => {
       const output = data.toString();
-      if (output.toLowerCase().includes('error') || output.toLowerCase().includes('failed')) {
+      if (output.toLowerCase().includes('error') || output.toLowerCase().includes('failed') || output.toLowerCase().includes('unauthenticated')) {
           console.error(`LocalXpose Error: ${output.trim()}`);
+          if (output.toLowerCase().includes('unauthenticated')) {
+            console.log("\n💡 Tip: Set the LOCLX_AUTH_TOKEN environment variable to fix this.");
+            console.log("Example: !LOCLX_AUTH_TOKEN=your_token_here node index.js");
+          }
       }
     });
 

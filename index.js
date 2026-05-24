@@ -79,41 +79,35 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Starting Serveo tunnel (Alternative to localhost.run)...');
+    console.log('Starting Cloudflare Tunnel (Alternative to localhost.run)...');
     
-    // Serveo uses SSH for zero-install tunnels
-    const ssh = spawn('ssh', [
-      '-R', `80:localhost:${PORT}`,
-      'serveo.net',
-      '-o', 'StrictHostKeyChecking=no',
-      '-o', 'UserKnownHostsFile=/dev/null',
-      '-o', 'ServerAliveInterval=60'
+    // Using Cloudflare Quick Tunnels (no account needed)
+    // In Colab, the user should have cloudflared installed.
+    // We try to use 'cloudflared' directly.
+    const cf = spawn('cloudflared', [
+      'tunnel',
+      '--url', `http://localhost:${PORT}`,
+      '--no-autoupdate'
     ]);
 
-    ssh.stdout.on('data', (data) => {
+    cf.stderr.on('data', (data) => {
       const output = data.toString();
-      console.log(output);
-      // Look for the URL in the output (Serveo usually outputs "Forwarding HTTP traffic from https://xxxx.serveo.net")
-      const match = output.match(/https:\/\/[a-z0-9-]+\.serveo\.net/);
+      // Cloudflare outputs the tunnel URL to stderr
+      const match = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
       if (match) {
         console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
       }
-    });
-
-    ssh.stderr.on('data', (data) => {
-      const errOutput = data.toString();
-      // Serveo might output the URL on stderr sometimes or other info
-      const match = errOutput.match(/https:\/\/[a-z0-9-]+\.serveo\.net/);
-      if (match) {
-        console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
-      }
-      if (errOutput.toLowerCase().includes('error') || errOutput.toLowerCase().includes('failed')) {
-          console.error(`SSH Stderr: ${errOutput.trim()}`);
+      
+      if (output.includes('error') && !output.includes('failed to log to cloudflare')) {
+          console.error(`Cloudflare Error: ${output.trim()}`);
       }
     });
 
-    ssh.on('close', (code) => {
-      console.log(`SSH tunnel process exited with code ${code}`);
+    cf.on('close', (code) => {
+      if (code !== 0 && code !== null) {
+        console.log(`Cloudflare tunnel process exited with code ${code}. Make sure 'cloudflared' is installed.`);
+        console.log("You can install it in Colab using: !curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared");
+      }
     });
   }
 });

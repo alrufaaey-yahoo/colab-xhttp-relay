@@ -79,51 +79,48 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Starting Bore tunnel (Oracle Cloud Optimized)...');
+    console.log('Starting Cloudflare Tunnel (Direct Link)...');
     
-    // Bore is a modern TCP tunnel often hosted on high-performance clouds like Oracle
-    // Using the public bore.pub server
-    let bore;
+    // Cloudflare Tunnel (cloudflared) provides a stable and direct link
+    let tunnel;
     try {
-      bore = spawn('bore', [
-        'local', PORT,
-        '--to', 'bore.pub'
+      tunnel = spawn('cloudflared', [
+        'tunnel', '--url', `http://localhost:${PORT}`
       ]);
     } catch (err) {
-      console.error('Failed to start Bore tunnel:', err.message);
-      console.log("Make sure 'bore' is installed. You can install it using:");
-      console.log("!curl -Ls https://github.com/ekzhang/bore/releases/latest/download/bore-v0.6.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /usr/local/bin");
+      console.error('Failed to start Cloudflare Tunnel:', err.message);
+      console.log("Make sure 'cloudflared' is installed. You can install it using:");
+      console.log("!curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared");
       return;
     }
 
-    bore.on('error', (err) => {
-      console.error('Bore process error:', err.message);
+    tunnel.on('error', (err) => {
+      console.error('Tunnel process error:', err.message);
       if (err.code === 'ENOENT') {
-        console.log("Error: 'bore' command not found in PATH.");
+        console.log("Error: 'cloudflared' command not found in PATH.");
       }
     });
 
-    bore.stdout.on('data', (data) => {
+    tunnel.stdout.on('data', (data) => {
+      console.log('Cloudflare:', data.toString().trim());
+    });
+
+    tunnel.stderr.on('data', (data) => {
       const output = data.toString();
-      // Bore output format: "listening at bore.pub:<PORT>"
-      const match = output.match(/bore\.pub:[0-9]+/);
+      // Cloudflare Tunnel output format for the public URL
+      const match = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
       if (match) {
-        console.log(`\n✅ Tunnel established! Access your relay at: http://${match[0]}`);
+        console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
       }
-      console.log('Bore:', output.trim());
-    });
-
-    bore.stderr.on('data', (data) => {
-      const errOutput = data.toString();
-      if (errOutput.toLowerCase().includes('error')) {
-          console.error(`Bore Error: ${errOutput.trim()}`);
+      // Only log errors or important info from stderr to keep it clean
+      if (output.includes('error') || output.includes('failed')) {
+          console.error(`Cloudflare Error: ${output.trim()}`);
       }
     });
 
-    bore.on('close', (code) => {
+    tunnel.on('close', (code) => {
       if (code !== 0 && code !== null) {
-        console.log(`Bore process exited with code ${code}. Make sure 'bore' is installed.`);
-        console.log("You can install it in Colab using: !curl -Ls https://github.com/ekzhang/bore/releases/latest/download/bore-linux-amd64.tar.gz | tar -xz -C /usr/local/bin");
+        console.log(`Tunnel process exited with code ${code}.`);
       }
     });
   }

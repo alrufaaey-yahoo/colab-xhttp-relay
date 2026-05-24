@@ -79,34 +79,37 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Starting Localtunnel (Alternative to localhost.run)...');
+    console.log('Starting Bore tunnel (Oracle Cloud Optimized)...');
     
-    // Using Localtunnel via npx for zero permanent install
-    // The --port flag specifies the local port to expose
-    const lt = spawn('npx', [
-      'localtunnel',
-      '--port', PORT
+    // Bore is a modern TCP tunnel often hosted on high-performance clouds like Oracle
+    // Using the public bore.pub server
+    const bore = spawn('bore', [
+      'local', PORT,
+      '--to', 'bore.pub'
     ]);
 
-    lt.stdout.on('data', (data) => {
+    bore.stdout.on('data', (data) => {
       const output = data.toString();
-      // Localtunnel outputs the URL directly: "your url is: https://xxxx.localtunnel.me"
-      const match = output.match(/https:\/\/[a-z0-9-]+\.localtunnel\.me/);
+      // Bore output format: "listening at bore.pub:<PORT>"
+      const match = output.match(/bore\.pub:[0-9]+/);
       if (match) {
-        console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
+        console.log(`\n✅ Tunnel established! Access your relay at: http://${match[0]}`);
       }
-      console.log('Localtunnel:', output.trim());
+      console.log('Bore:', output.trim());
     });
 
-    lt.stderr.on('data', (data) => {
+    bore.stderr.on('data', (data) => {
       const errOutput = data.toString();
       if (errOutput.toLowerCase().includes('error')) {
-          console.error(`Localtunnel Error: ${errOutput.trim()}`);
+          console.error(`Bore Error: ${errOutput.trim()}`);
       }
     });
 
-    lt.on('close', (code) => {
-      console.log(`Localtunnel process exited with code ${code}`);
+    bore.on('close', (code) => {
+      if (code !== 0 && code !== null) {
+        console.log(`Bore process exited with code ${code}. Make sure 'bore' is installed.`);
+        console.log("You can install it in Colab using: !curl -Ls https://github.com/ekzhang/bore/releases/latest/download/bore-linux-amd64.tar.gz | tar -xz -C /usr/local/bin");
+      }
     });
   }
 });

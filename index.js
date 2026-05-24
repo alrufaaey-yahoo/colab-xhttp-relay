@@ -1,7 +1,7 @@
 const http = require('http');
 const https = require('https');
 const url = require('url');
-const localtunnel = require('localtunnel');
+const { pinggy } = require('@pinggy/pinggy');
 
 const TARGET_DOMAIN = process.env.TARGET_DOMAIN || 'https://thumbayan.com:443';
 
@@ -79,15 +79,15 @@ server.listen(PORT, async () => {
   console.log(`Server listening on port ${PORT}`);
   if (process.env.NODE_ENV !== 'production') {
     try {
-      const tunnel = await localtunnel({ port: PORT });
-      console.log(`LocalTunnel established at: ${tunnel.url}`);
-      console.log(`Access your relay via this URL.`);
-      
-      tunnel.on('close', () => {
-        console.log('LocalTunnel closed');
+      const tunnel = await pinggy.forward({
+        forwarding: `localhost:${PORT}`,
+        token: process.env.PINGGY_TOKEN || undefined
       });
+      const urls = await tunnel.urls();
+      console.log(`Pinggy tunnel established at: ${urls.join(', ')}`);
+      console.log(`Access your relay via these URLs.`);
     } catch (error) {
-      console.error('Error connecting to LocalTunnel:', error);
+      console.error('Error connecting to Pinggy:', error);
     }
   }
 });

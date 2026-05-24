@@ -79,27 +79,38 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Starting localhost.run tunnel...');
+    console.log('Starting Pinggy tunnel (Alternative to localhost.run)...');
     
+    // Pinggy uses SSH for zero-install tunnels
+    // The -T flag is often needed for non-interactive shells
     const ssh = spawn('ssh', [
+      '-p', '443',
       '-R', `80:localhost:${PORT}`,
-      'localhost.run',
       '-o', 'StrictHostKeyChecking=no',
-      '-o', 'UserKnownHostsFile=/dev/null'
+      '-o', 'UserKnownHostsFile=/dev/null',
+      '-o', 'ServerAliveInterval=30',
+      'a.pinggy.io'
     ]);
 
     ssh.stdout.on('data', (data) => {
       const output = data.toString();
-      console.log(output);
-      // Look for the URL in the output
-      const match = output.match(/https:\/\/[a-z0-9-]+\.lhr\.life/);
+      // Pinggy output contains the URL
+      const match = output.match(/https:\/\/[a-z0-9-]+\.free\.pinggy\.link/);
       if (match) {
         console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
+      }
+      // Log other output if needed for debugging
+      if (output.includes('http')) {
+         console.log('Pinggy Output:', output.trim());
       }
     });
 
     ssh.stderr.on('data', (data) => {
-      console.error(`SSH Stderr: ${data}`);
+      // SSH stderr often contains connection info, not necessarily errors
+      const errOutput = data.toString();
+      if (errOutput.toLowerCase().includes('error') || errOutput.toLowerCase().includes('failed')) {
+          console.error(`SSH Tunnel Error: ${errOutput.trim()}`);
+      }
     });
 
     ssh.on('close', (code) => {

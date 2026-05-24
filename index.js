@@ -79,35 +79,34 @@ server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Starting Cloudflare Tunnel (Alternative to localhost.run)...');
+    console.log('Starting Localtunnel (Alternative to localhost.run)...');
     
-    // Using Cloudflare Quick Tunnels (no account needed)
-    // In Colab, the user should have cloudflared installed.
-    // We try to use 'cloudflared' directly.
-    const cf = spawn('cloudflared', [
-      'tunnel',
-      '--url', `http://localhost:${PORT}`,
-      '--no-autoupdate'
+    // Using Localtunnel via npx for zero permanent install
+    // The --port flag specifies the local port to expose
+    const lt = spawn('npx', [
+      'localtunnel',
+      '--port', PORT
     ]);
 
-    cf.stderr.on('data', (data) => {
+    lt.stdout.on('data', (data) => {
       const output = data.toString();
-      // Cloudflare outputs the tunnel URL to stderr
-      const match = output.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
+      // Localtunnel outputs the URL directly: "your url is: https://xxxx.localtunnel.me"
+      const match = output.match(/https:\/\/[a-z0-9-]+\.localtunnel\.me/);
       if (match) {
         console.log(`\n✅ Tunnel established! Access your relay at: ${match[0]}`);
       }
-      
-      if (output.includes('error') && !output.includes('failed to log to cloudflare')) {
-          console.error(`Cloudflare Error: ${output.trim()}`);
+      console.log('Localtunnel:', output.trim());
+    });
+
+    lt.stderr.on('data', (data) => {
+      const errOutput = data.toString();
+      if (errOutput.toLowerCase().includes('error')) {
+          console.error(`Localtunnel Error: ${errOutput.trim()}`);
       }
     });
 
-    cf.on('close', (code) => {
-      if (code !== 0 && code !== null) {
-        console.log(`Cloudflare tunnel process exited with code ${code}. Make sure 'cloudflared' is installed.`);
-        console.log("You can install it in Colab using: !curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared");
-      }
+    lt.on('close', (code) => {
+      console.log(`Localtunnel process exited with code ${code}`);
     });
   }
 });

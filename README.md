@@ -14,7 +14,8 @@
     !sudo apt-get install -y nodejs
 
     # تثبيت Bore (نفق مستضاف على Oracle Cloud)
-    !curl -Ls https://github.com/ekzhang/bore/releases/latest/download/bore-linux-amd64.tar.gz | tar -xz -C /usr/local/bin
+    # ملاحظة: إذا واجهت خطأ ENOENT، تأكد من تشغيل هذا الأمر أولاً
+    !curl -Ls https://github.com/ekzhang/bore/releases/download/v0.6.0/bore-v0.6.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /usr/local/bin
     ```
 
 3.  **استنساخ المستودع:** قم باستنساخ هذا المستودع إلى بيئة Colab الخاصة بك:

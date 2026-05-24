@@ -83,10 +83,25 @@ server.listen(PORT, () => {
     
     // Bore is a modern TCP tunnel often hosted on high-performance clouds like Oracle
     // Using the public bore.pub server
-    const bore = spawn('bore', [
-      'local', PORT,
-      '--to', 'bore.pub'
-    ]);
+    let bore;
+    try {
+      bore = spawn('bore', [
+        'local', PORT,
+        '--to', 'bore.pub'
+      ]);
+    } catch (err) {
+      console.error('Failed to start Bore tunnel:', err.message);
+      console.log("Make sure 'bore' is installed. You can install it using:");
+      console.log("!curl -Ls https://github.com/ekzhang/bore/releases/latest/download/bore-v0.6.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /usr/local/bin");
+      return;
+    }
+
+    bore.on('error', (err) => {
+      console.error('Bore process error:', err.message);
+      if (err.code === 'ENOENT') {
+        console.log("Error: 'bore' command not found in PATH.");
+      }
+    });
 
     bore.stdout.on('data', (data) => {
       const output = data.toString();
